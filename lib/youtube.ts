@@ -1,7 +1,7 @@
 import { z } from "zod"
 import axios from "axios"
 
-const YOUTUBE_API_KEY = "process.env.NEXT_PUBLIC_YOUTUBE_API_KEY"
+const YOUTUBE_API_KEY = process.env.NEXT_PUBLIC_YOUTUBE_API_KEY
 
 export const videoStatsSchema = z.object({
   viewCount: z.string(),
@@ -34,20 +34,20 @@ export async function getVideoStats(videoId: string): Promise<VideoStats> {
   })
 }
 
-export async function getVideoComments(videoId: string): Promise<Comment[]> {
-  return []
-  // const response = await axios.get(
-  //   `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${videoId}&key=${YOUTUBE_API_KEY}&order=time&maxResults=100`
-  // )
-  // const { data } = response
+// export async function getVideoComments(videoId: string): Promise<Comment[]> {
+// return []
+// const response = await axios.get(
+//   `https://www.googleapis.com/youtube/v3/commentThreads?part=snippet&videoId=${videoId}&key=${YOUTUBE_API_KEY}&order=time&maxResults=100`
+// )
+// const { data } = response
 
-  // return data.items.map((item: any) => ({
-  //   id: item.id,
-  //   authorDisplayName: item.snippet.topLevelComment.snippet.authorDisplayName,
-  //   authorProfileImageUrl:
-  //     item.snippet.topLevelComment.snippet.authorProfileImageUrl,
-  //   textDisplay: item.snippet.topLevelComment.snippet.textDisplay,
-  //   publishedAt: item.snippet.topLevelComment.snippet.publishedAt,
-  //   likeCount: item.snippet.topLevelComment.snippet.likeCount,
-  // }))
-}
+// return data.items.map((item: any) => ({
+//   id: item.id,
+//   authorDisplayName: item.snippet.topLevelComment.snippet.authorDisplayName,
+//   authorProfileImageUrl:
+//     item.snippet.topLevelComment.snippet.authorProfileImageUrl,
+//   textDisplay: item.snippet.topLevelComment.snippet.textDisplay,
+//   publishedAt: item.snippet.topLevelComment.snippet.publishedAt,
+//   likeCount: item.snippet.topLevelComment.snippet.likeCount,
+// }))
+// }

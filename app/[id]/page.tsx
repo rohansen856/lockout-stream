@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { io, Socket } from "socket.io-client"
 import {
   MessageCircle,
   Eye,
@@ -12,12 +13,11 @@ import {
   Zap,
 } from "lucide-react"
 import Image from "next/image"
-import type { Question } from "@/types/contest"
+import type { Question, Player, ContestScore } from "@/types/contest"
 import { PlayerCard } from "@/components/player-card"
 import { QuestionsTabs } from "@/components/questions-tabs"
 import { ScoreProgress } from "@/components/score-progress"
 import { ContestProblems } from "@/components/contest-info"
-import { mockPlayers, mockQuestions, mockScore } from "@/lib/data"
 import { StatCard } from "@/components/stats-card"
 
 interface HomeProps {
@@ -27,8 +27,40 @@ interface HomeProps {
 }
 
 export default function Home({ params }: HomeProps) {
+  const [contestId, setContestId] = useState<string | null>()
   const [currentVideoId] = useState(params.id)
   const [timeLeft, setTimeLeft] = useState(7200)
+  const [players, setPlayers] = useState<{ [key: string]: Player } | null>()
+  const [questions, setQuestions] = useState<Question[] | null>()
+  const [score, setScore] = useState<ContestScore | null>()
+  const [socket, setSocket] = useState<Socket | null>(null)
+
+  useEffect(() => {
+    const newSocket = io(
+      process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:5000"
+    )
+    setSocket(newSocket)
+
+    newSocket.on(
+      "contest_update",
+      (data: {
+        contestId: string
+        players: { [key: string]: Player }
+        questions: Question[]
+        score: ContestScore
+      }) => {
+        console.log(data)
+        setContestId(data.contestId)
+        setPlayers(data.players)
+        setQuestions(data.questions)
+        setScore(data.score)
+      }
+    )
+
+    return () => {
+      newSocket.disconnect()
+    }
+  }, [])
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -84,16 +116,18 @@ export default function Home({ params }: HomeProps) {
           <div className="space-y-8">
             <div className="flex gap-6">
               {/* Left Sidebar - Chat */}
-              <div
-                key={mockPlayers.player1.id}
-                className="bg-slate-800/50 backdrop-blur rounded-xl p-4 border border-white/10 hidden md:block"
-              >
-                <PlayerCard
-                  player={mockPlayers.player1}
-                  side={"left"}
-                  isWinning={mockScore["player1"] > mockScore["player2"]}
-                />
-              </div>
+              {players && score && (
+                <div
+                  key={players.player1.id}
+                  className="bg-slate-800/50 backdrop-blur rounded-xl p-4 border border-white/10 hidden md:block"
+                >
+                  <PlayerCard
+                    player={players.player1}
+                    side={"left"}
+                    isWinning={score["player1"] > score["player2"]}
+                  />
+                </div>
+              )}
 
               {/* Main Content */}
               <div className="flex-1 space-y-6">
@@ -115,45 +149,49 @@ export default function Home({ params }: HomeProps) {
               </div>
 
               {/* Right Sidebar - Stream Info */}
-              <div
-                key={mockPlayers.player2.id}
-                className="bg-slate-800/50 backdrop-blur rounded-xl p-4 border border-white/10 hidden md:block"
-              >
-                <PlayerCard
-                  player={mockPlayers.player2}
-                  side={"left"}
-                  isWinning={mockScore["player2"] > mockScore["player1"]}
-                />
-              </div>
+              {players && score && (
+                <div
+                  key={players.player2.id}
+                  className="bg-slate-800/50 backdrop-blur rounded-xl p-4 border border-white/10 hidden md:block"
+                >
+                  <PlayerCard
+                    player={players.player2}
+                    side={"left"}
+                    isWinning={score["player2"] > score["player1"]}
+                  />
+                </div>
+              )}
             </div>
 
             <div className="flex gap-6 md:hidden">
-              {/* Left Sidebar - Chat */}
-              <div
-                key={mockPlayers.player1.id}
-                className="bg-slate-800/50 backdrop-blur rounded-xl p-4 border border-white/10"
-              >
-                <PlayerCard
-                  player={mockPlayers.player1}
-                  side={"left"}
-                  isWinning={mockScore["player1"] > mockScore["player2"]}
-                />
-              </div>
+              {players && score && (
+                <>
+                  <div
+                    key={players.player1.id}
+                    className="bg-slate-800/50 backdrop-blur rounded-xl p-4 border border-white/10"
+                  >
+                    <PlayerCard
+                      player={players.player1}
+                      side={"left"}
+                      isWinning={score["player1"] > score["player2"]}
+                    />
+                  </div>
 
-              {/* Right Sidebar - Stream Info */}
-              <div
-                key={mockPlayers.player2.id}
-                className="bg-slate-800/50 backdrop-blur rounded-xl p-4 border border-white/10"
-              >
-                <PlayerCard
-                  player={mockPlayers.player2}
-                  side={"left"}
-                  isWinning={mockScore["player2"] > mockScore["player1"]}
-                />
-              </div>
+                  <div
+                    key={players.player2.id}
+                    className="bg-slate-800/50 backdrop-blur rounded-xl p-4 border border-white/10"
+                  >
+                    <PlayerCard
+                      player={players.player2}
+                      side={"left"}
+                      isWinning={score["player2"] > score["player1"]}
+                    />
+                  </div>
+                </>
+              )}
             </div>
 
-            <ScoreProgress score={mockScore} />
+            {score && <ScoreProgress score={score} />}
 
             {/* Problems Section */}
             <div className="bg-slate-800/50 backdrop-blur rounded-xl p-6 border border-white/10">
@@ -164,10 +202,10 @@ export default function Home({ params }: HomeProps) {
                 </h2>
                 <Zap className="w-6 h-6 text-yellow-400" />
               </div>
-              <QuestionsTabs questions={mockQuestions as Question[]} />
+              {questions && <QuestionsTabs questions={questions} />}
             </div>
 
-            <ContestProblems contestId="abc226" />
+            {contestId && <ContestProblems contestId={contestId} />}
           </div>
         )}
       </div>

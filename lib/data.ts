@@ -1,6 +1,6 @@
-import { Question } from "@/types/contest"
+import { Player, Question } from "@/types/contest"
 
-export const mockPlayers = {
+export const mockPlayers: { [key: string]: Player } = {
   player1: {
     id: "1",
     name: "Alex Chen",
